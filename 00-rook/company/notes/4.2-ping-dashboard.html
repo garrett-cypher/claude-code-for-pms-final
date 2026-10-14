@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rook Dispatch: 4.2 ping dashboard</title>
+<style>
+:root{--surface-1:#f5f4f0;--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--radius:8px}
+@media (prefers-color-scheme:dark){:root{--surface-1:#1a1a19;--text-primary:#f0efec;--text-secondary:#c3c2b7}body{background:#111}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--text-primary);max-width:720px;margin:0 auto;padding:24px 16px;line-height:1.5}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+.sub{font-size:13px;color:var(--text-secondary);margin:0 0 1.5rem}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<h1>Rook Dispatch: 4.2 ping dashboard</h1>
+<p class="sub">Source: rook-database <code>pings</code> and <code>responders</code>, 29 Jun to 6 Sep 2026 (1,696 pings). 4.2 shipped 12 Aug. Fictional course data.</p>
+<h2 class="sr-only">Dashboard of missed and accepted pings before and after the 4.2 release on 12 August, weekly and by responder</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 1.5rem;">
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;"><div style="font-size:13px;color:var(--text-secondary);">Missed, before 12 Aug</div><div style="font-size:24px;font-weight:500;">2.3%</div><div style="font-size:12px;color:var(--text-muted);">25 of 1,085 pings</div></div>
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;"><div style="font-size:13px;color:var(--text-secondary);">Missed, after 12 Aug</div><div style="font-size:24px;font-weight:500;">18.0%</div><div style="font-size:12px;color:var(--text-muted);">110 of 611 pings</div></div>
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;"><div style="font-size:13px;color:var(--text-secondary);">Four hit hardest</div><div style="font-size:24px;font-weight:500;">59%</div><div style="font-size:12px;color:var(--text-muted);">33 of 56 pings missed</div></div>
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;"><div style="font-size:13px;color:var(--text-secondary);">Other 12 responders</div><div style="font-size:24px;font-weight:500;">14%</div><div style="font-size:12px;color:var(--text-muted);">77 of 555 pings</div></div>
+</div>
+
+<div style="font-size:14px;font-weight:500;margin:0 0 4px;">Weekly missed and acceptance rate</div>
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;font-size:12px;color:var(--text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a78d6;"></span>Acceptance %</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eb6834;"></span>Missed % (dashed)</span>
+  <span>4.2 shipped 12 Aug: week of 10 Aug is split at the release</span>
+</div>
+<div style="position:relative;width:100%;height:260px;margin-bottom:2rem;"><canvas id="wk" role="img" aria-label="Line chart of weekly acceptance and missed percentage. Acceptance is about 77 percent before 12 August, drops to 47 percent, and recovers to 73 percent. Missed rises from about 2 percent to 29 percent and eases to 13 percent.">Acceptance ~77% before 4.2, 47% in the first week after, 73% by 31 Aug. Missed 1-3% before, 29% after, 13% by 31 Aug.</canvas></div>
+
+<div style="font-size:14px;font-weight:500;margin:0 0 4px;">Missed pings by responder, before and after 12 Aug</div>
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;font-size:12px;color:var(--text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#b4b2a9;"></span>Before</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eb6834;"></span>After: the four hit hardest</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a78d6;"></span>After: other 12</span>
+</div>
+<div style="position:relative;width:100%;height:700px;"><canvas id="rs" role="img" aria-label="Horizontal bar chart of missed ping percentage per responder before and after 12 August. The Undertow, Farlight, Meteor Mite and Vesper are 53 to 64 percent after; the other 12 are 10 to 18 percent.">The Undertow 1 to 64 percent, Farlight 4 to 64, Meteor Mite 3 to 57, Vesper 3 to 53, others 10 to 18 percent after 12 August.</canvas></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const mut=getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim()||'#898781';
+const grid='rgba(128,128,120,0.2)';
+new Chart(document.getElementById('wk'),{type:'line',data:{labels:['29 Jun','6 Jul','13 Jul','20 Jul','27 Jul','3 Aug','10 Aug (pre)','10 Aug (post)','17 Aug','24 Aug','31 Aug'],datasets:[
+{label:'Acceptance %',data:[76.7,77.1,76.4,75.0,77.6,77.9,72.5,46.8,65.8,66.7,72.7],borderColor:'#2a78d6',backgroundColor:'#2a78d6',borderWidth:2,pointRadius:3,tension:0},
+{label:'Missed %',data:[1.7,2.4,3.4,2.8,2.4,1.2,2.0,29.4,17.7,14.8,12.7],borderColor:'#eb6834',backgroundColor:'#eb6834',borderWidth:2,borderDash:[6,4],pointRadius:3,tension:0}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}},
+scales:{y:{min:0,max:100,grid:{color:grid},ticks:{color:mut,callback:v=>v+'%'}},x:{grid:{display:false},ticks:{color:mut,autoSkip:false,maxRotation:45}}}}});
+const names=['The Undertow','Farlight','Meteor Mite','Vesper','Sgt. Bulwark','Ironvale','The Drift','The Longcast','Sgt. Falkirk','Halfmoon','Stormwrack','Cpl. Ashgrove','The Gale','Cindermark','Nightwell','Capt. Vantage'];
+const before=[1,4,3,3,0,2,3,2,3,0,0,2,5,2,3,3];
+const after=[64,64,57,53,18,18,18,16,15,15,14,14,12,12,11,10];
+const cols=after.map((v,i)=>i<4?'#eb6834':'#2a78d6');
+new Chart(document.getElementById('rs'),{type:'bar',data:{labels:names,datasets:[
+{label:'Before',data:before,backgroundColor:'#b4b2a9',barThickness:12,borderRadius:3},
+{label:'After',data:after,backgroundColor:cols,barThickness:12,borderRadius:3}]},
+options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.x+'% missed'}}},
+scales:{x:{min:0,max:70,grid:{color:grid},ticks:{color:mut,callback:v=>v+'%'}},y:{grid:{display:false},ticks:{color:mut,autoSkip:false}}}}});
+</script>
+</body>
+</html>
