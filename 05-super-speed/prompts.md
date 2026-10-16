@@ -15,7 +15,19 @@ prompt library built from your own questions.
 ---
 
 ### 1.
+Present a diagram of how the new system would work
 
 ### 2.
+Save the brief exactly as it stands now as 05-super-speed/brief.md. Show me the file when it's done.
 
 ### 3.
+Are rook suers primarily ios or android users?
+
+### 4.
+Update the prototype to be iOs
+
+### 5.
+Allow me to select all known users in the prototype.
+
+### 6.
+reduce the prototype client list back to the original 2.

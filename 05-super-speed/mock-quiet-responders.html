@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rook Dispatch: way back for quiet responders (mock)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #eef0f3; color: #1d2430; }
+  header { background: #1d2430; color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  header small { color: #aab; }
+  .banner { background: #fff6d6; border-bottom: 1px solid #e6d58a; padding: 8px 24px; font-size: 13px; }
+  main { display: flex; gap: 32px; padding: 24px; flex-wrap: wrap; align-items: flex-start; }
+  h2 { font-size: 15px; margin: 0 0 10px; color: #475; text-transform: uppercase; letter-spacing: .05em; }
+  .console { background: #fff; border-radius: 8px; padding: 18px; width: 760px; box-shadow: 0 1px 4px #0002; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-size: 14px; }
+  select { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid #b9c0cc; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e4e7ec; }
+  th { color: #667; font-weight: 600; font-size: 12px; }
+  tr.row { cursor: pointer; }
+  tr.row:hover { background: #f4f7fb; }
+  tr.row.sel { background: #eaf1fb; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e6f4ea; color: #1a6b35; white-space: nowrap; }
+  .tag.quiet { background: #fdecc8; color: #8a5a00; }
+  .tag.back { background: #dbeafe; color: #1e4fa0; }
+  .tag.wait { background: #ece7f8; color: #4b3a8a; }
+  .detail { margin-top: 14px; padding: 14px; background: #f7f8fa; border-radius: 6px; font-size: 14px; }
+  .detail p { margin: 6px 0; }
+  .cmp { display: flex; gap: 24px; align-items: flex-end; height: 64px; margin: 8px 0; }
+  .cmp div { text-align: center; font-size: 11px; color: #667; }
+  .cmp span { display: block; width: 56px; background: #7a9cc6; border-radius: 2px 2px 0 0; margin-bottom: 3px; }
+  .cmp .after span { background: #e2a23b; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid #1d2430; background: #1d2430; color: #fff; padding: 7px 14px; }
+  button.secondary { background: #fff; color: #1d2430; }
+  button:disabled { opacity: .4; cursor: default; }
+  .note { font-size: 12px; color: #667; margin-top: 8px; }
+  .phone { width: 300px; height: 600px; background: #0b0b0d; border-radius: 48px; padding: 10px; box-shadow: 0 2px 10px #0004; border: 2px solid #3a3a3e; font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
+  .screen { background: linear-gradient(170deg, #2b3a67, #5b3f7a 60%, #8a4b6b); color: #fff; border-radius: 38px; height: 100%; padding: 0 12px; position: relative; overflow: hidden; }
+  .island { width: 90px; height: 26px; background: #000; border-radius: 14px; margin: 10px auto 0; }
+  .status { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; padding: 0 14px; margin-top: -22px; }
+  .lock { text-align: center; font-size: 13px; margin-top: 26px; opacity: .9; }
+  .screen .date { text-align: center; font-size: 15px; font-weight: 500; margin-top: 4px; opacity: .85; }
+  .screen .time { text-align: center; font-size: 74px; font-weight: 600; line-height: 1; margin-top: 2px; }
+  .notif { background: rgba(245,245,247,.88); color: #111; border-radius: 20px; padding: 11px 12px; margin-top: 28px; font-size: 13px; line-height: 1.35; }
+  .notif .head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .notif .icon { width: 20px; height: 20px; border-radius: 5px; background: #1d2430; color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 20px; }
+  .notif .app { font-size: 11px; color: #555; text-transform: uppercase; flex: 1; }
+  .notif .when { font-size: 11px; color: #555; }
+  .notif b { display: block; margin-bottom: 2px; font-size: 14px; }
+  .actions { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .actions button { width: 100%; border: 0; border-radius: 14px; background: rgba(245,245,247,.88); color: #0a63d6; font-size: 15px; font-weight: 500; padding: 11px; }
+  .actions button.plain { color: #111; }
+  .confirm { margin-top: 30px; text-align: center; font-size: 15px; }
+  .homebar { position: absolute; bottom: 8px; left: 50%; margin-left: -60px; width: 120px; height: 5px; border-radius: 3px; background: #fff; opacity: .8; }
+  .hidden { display: none; }
+  .picker { width: 300px; margin-bottom: 10px; font-size: 14px; }
+  .picker select { width: 100%; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header><div><b>Rook Dispatch</b> &nbsp; Console</div><small>Handler: Kip &middot; 2 responders</small></header>
+<div class="banner">Mock for discussion with Helen. Names, areas and ping counts come from the Rook database (29 Jun to 6 Sep 2026). The "confirm availability" request and the recovery behaviour are proposals, not built.</div>
+<main>
+  <section>
+    <h2>Handler console: responders</h2>
+    <div class="console">
+      <div class="toolbar">
+        <label>Handler <select id="handler"></select></label>
+        <button class="secondary" id="sel-all">Select all shown</button>
+        <button class="secondary" id="sel-quiet">Select quiet only</button>
+        <button class="secondary" id="sel-none">Clear</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th><input type="checkbox" id="chk-all" aria-label="Select all shown"></th>
+          <th>Responder</th><th>Handler</th><th>Area</th><th>Pings / week</th><th>Missed since 12 Aug</th><th>Status</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="detail" id="detail"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="send-check" disabled>Ask selected to confirm availability</button>
+        <button class="secondary" id="reset">Reset demo</button>
+        <span class="note" id="sent-note"></span>
+      </div>
+      <p class="note">Shown to a handler for their own responders only. Cover names and ping counts only; nothing here relates to anyone's identity. "Quiet" here means pings down by half or more and at least 40% missed since 12 Aug.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Responder phone</h2>
+    <div class="picker"><label>Show the phone of<select id="phone-of"></select></label></div>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="status"><span>9:41</span><span>5G &#9646;&#9646;&#9646;</span></div>
+      <div class="lock">&#128274;</div>
+      <div class="date">Tuesday 15 September</div>
+      <div class="time">9:41</div>
+      <div id="notif" class="hidden">
+        <div class="notif">
+          <div class="head"><span class="icon">R</span><span class="app">Rook Dispatch</span><span class="when">now</span></div>
+          <b>Are you still around?</b>
+          You haven't had many callouts lately. Some pings may have timed out before you could answer. Confirm and you'll be offered callouts again like anyone else.
+        </div>
+        <div class="actions"><button id="yes">I'm available</button><button class="plain" id="later">Not now</button></div>
+      </div>
+      <div id="idle" class="confirm" style="opacity:.75;font-size:13px;padding:0 10px">No request for this responder. Select responders on the console and press "Ask selected to confirm availability".</div>
+      <div id="done" class="confirm hidden">&#10003; Thanks. You're back in the offer order. Earlier missed pings count for less from now on.</div>
+      <div id="declined" class="confirm hidden">OK. We'll leave things as they are.</div>
+      <div class="homebar"></div>
+    </div></div>
+    <p class="note" style="width:300px">This does not guarantee pings. It only stops past silence from ranking the responder down.</p>
+  </section>
+</main>
+
+<script>
+  var BEFORE_WEEKS = 6.3, AFTER_WEEKS = 3.7;
+  var raw = [
+    ["Meteor Mite","Kip","Eastgate",70,14,8],
+    ["The Gale","Kip","Eastgate",82,69,8]
+  ];
+  var R = [];
+  var selected = {}, pending = {}, back = {}, current = null;
+
+  function init() {
+    R = raw.map(function (r) {
+      var pb = r[3] / BEFORE_WEEKS, pa = r[4] / AFTER_WEEKS, mr = r[5] / r[4];
+      return { name: r[0], handler: r[1], area: r[2], wkBefore: pb, wkAfter: pa, missed: r[5], pingsAfter: r[4], missRate: mr,
+               quiet: (pa <= pb * 0.5 && mr >= 0.4) };
+    });
+    selected = {}; pending = {}; back = {}; current = null;
+    var hs = document.getElementById('handler');
+    var names = []; R.forEach(function (r) { if (names.indexOf(r.handler) < 0) names.push(r.handler); });
+    hs.innerHTML = '<option value="">All handlers (' + names.length + ')</option>' +
+      names.map(function (n) { return '<option>' + n + '</option>'; }).join('');
+    document.getElementById('phone-of').innerHTML = R.map(function (r) {
+      return '<option value="' + r.name + '">' + r.name + ' (' + r.handler + ')</option>';
+    }).join('');
+    document.getElementById('phone-of').value = 'Meteor Mite';
+    render(); renderPhone();
+  }
+
+  function shown() {
+    var h = document.getElementById('handler').value;
+    return R.filter(function (r) { return !h || r.handler === h; });
+  }
+  function statusTag(r) {
+    if (back[r.name]) return '<span class="tag back">Back in offer order</span>';
+    if (pending[r.name]) return '<span class="tag wait">Request sent</span>';
+    return r.quiet ? '<span class="tag quiet">Gone quiet</span>' : '<span class="tag">Active</span>';
+  }
+  function fmt(n) { return Math.round(n); }
+
+  function render() {
+    var list = shown();
+    document.getElementById('rows').innerHTML = list.map(function (r) {
+      var cls = 'row' + (selected[r.name] ? ' sel' : '');
+      return '<tr class="' + cls + '" data-n="' + r.name + '">' +
+        '<td><input type="checkbox" data-n="' + r.name + '"' + (selected[r.name] ? ' checked' : '') + '></td>' +
+        '<td>' + r.name + '</td><td>' + r.handler + '</td><td>' + r.area + '</td>' +
+        '<td>' + fmt(r.wkBefore) + ' &rarr; ' + fmt(r.wkAfter) + (back[r.name] ? ' (recovering)' : '') + '</td>' +
+        '<td>' + r.missed + ' of ' + r.pingsAfter + ' (' + Math.round(r.missRate * 100) + '%)</td>' +
+        '<td>' + statusTag(r) + '</td></tr>';
+    }).join('');
+    var n = Object.keys(selected).filter(function (k) { return selected[k]; }).length;
+    var btn = document.getElementById('send-check');
+    btn.disabled = n === 0;
+    btn.textContent = n ? 'Ask ' + n + ' selected to confirm availability' : 'Ask selected to confirm availability';
+    var allChecked = list.length > 0 && list.every(function (r) { return selected[r.name]; });
+    document.getElementById('chk-all').checked = allChecked;
+    renderDetail();
+  }
+
+  function renderDetail() {
+    var d = document.getElementById('detail');
+    var r = R.filter(function (x) { return x.name === current; })[0];
+    if (!r) { d.innerHTML = '<p class="note">Click a responder for detail. Tick boxes to select several.</p>'; return; }
+    var reason;
+    if (back[r.name]) reason = 'confirmed available. Earlier misses now count for less in ranking.';
+    else if (r.quiet) reason = 'pings down from about ' + fmt(r.wkBefore) + ' a week to ' + fmt(r.wkAfter) + '. ' + r.missed + ' of ' + r.pingsAfter + ' since 12 Aug were missed.';
+    else reason = 'pings about ' + fmt(r.wkBefore) + ' a week before, ' + fmt(r.wkAfter) + ' since 12 Aug. ' + r.missed + ' of ' + r.pingsAfter + ' missed. No flag.';
+    d.innerHTML = '<p><b>' + r.name + '</b> (handler: ' + r.handler + '): ' + reason + '</p>' +
+      '<div class="cmp"><div><span style="height:' + Math.max(4, r.wkBefore / 15 * 100) + '%"></span>before ' + fmt(r.wkBefore) + '/wk</div>' +
+      '<div class="after"><span style="height:' + Math.max(4, r.wkAfter / 15 * 100) + '%"></span>after ' + fmt(r.wkAfter) + '/wk</div></div>' +
+      '<p class="note">Before = 29 Jun to 11 Aug, after = 12 Aug to 6 Sep. Weekly figures are averages.</p>';
+  }
+
+  function renderPhone() {
+    var who = document.getElementById('phone-of').value;
+    var id = back[who] ? 'done' : (pending[who] ? 'notif' : 'idle');
+    ['idle','notif','done','declined'].forEach(function (x) {
+      document.getElementById(x).classList.toggle('hidden', x !== id);
+    });
+  }
+
+  document.getElementById('handler').onchange = function () { render(); };
+  document.getElementById('rows').onclick = function (e) {
+    var tr = e.target.closest('tr'); if (!tr) return;
+    var n = tr.getAttribute('data-n');
+    if (e.target.tagName === 'INPUT') selected[n] = e.target.checked;
+    else current = n;
+    if (e.target.tagName === 'INPUT') current = n;
+    render();
+  };
+  document.getElementById('chk-all').onchange = function (e) {
+    shown().forEach(function (r) { selected[r.name] = e.target.checked; });
+    render();
+  };
+  document.getElementById('sel-all').onclick = function () { shown().forEach(function (r) { selected[r.name] = true; }); render(); };
+  document.getElementById('sel-quiet').onclick = function () { selected = {}; shown().forEach(function (r) { if (r.quiet && !back[r.name]) selected[r.name] = true; }); render(); };
+  document.getElementById('sel-none').onclick = function () { selected = {}; render(); };
+  document.getElementById('send-check').onclick = function () {
+    var names = Object.keys(selected).filter(function (k) { return selected[k]; });
+    names.forEach(function (n) { if (!back[n]) pending[n] = true; });
+    selected = {};
+    document.getElementById('sent-note').textContent = 'Sent to ' + names.length + '. Pick a responder under "Show the phone of" to see it.';
+    if (names.length) document.getElementById('phone-of').value = names[0];
+    render(); renderPhone();
+  };
+  document.getElementById('phone-of').onchange = renderPhone;
+  document.getElementById('yes').onclick = function () {
+    var who = document.getElementById('phone-of').value;
+    delete pending[who]; back[who] = true;
+    document.getElementById('sent-note').textContent = who + ' confirmed available.';
+    render(); renderPhone();
+  };
+  document.getElementById('later').onclick = function () {
+    var who = document.getElementById('phone-of').value;
+    delete pending[who];
+    render(); renderPhone();
+    ['idle','notif','done','declined'].forEach(function (x) {
+      document.getElementById(x).classList.toggle('hidden', x !== 'declined');
+    });
+    document.getElementById('sent-note').textContent = who + ' chose not now. No change made.';
+  };
+  document.getElementById('reset').onclick = function () { document.getElementById('sent-note').textContent = ''; init(); };
+
+  init();
+</script>
+</body>
+</html>
